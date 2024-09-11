@@ -1,5 +1,11 @@
 app:
   name: my-app
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/part-of: my-project
+  selectors:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/instance: my-app-instance
 
 service:
   enabled: true
