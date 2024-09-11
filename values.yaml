@@ -1,145 +1,27 @@
 app:
-  name: my-app
-  labels:
-    app.kubernetes.io/name: my-app
-    app.kubernetes.io/part-of: my-project
-  selectors:
-    app.kubernetes.io/name: my-app
-    app.kubernetes.io/instance: my-app-instance
-
-service:
-  enabled: true
-  type: ClusterIP # Can be ClusterIP or NodePort
-  annotations: 
-    "prometheus.io/scrape": "true"
-    "prometheus.io/port": "8080"
-  externalTrafficPolicy: Cluster # Only used if type is NodePort
-  ports:
-    - name: http
-      protocol: TCP
-      port: 80
-      targetPort: 8080
-    - name: https
-      protocol: TCP
-      port: 443
-      targetPort: 8443
-      nodePort: 30001 # Only used if type is NodePort
-
-ingress:
-  enabled: true
-  ingressClassName: "nginx" # Optional ingress class
-  annotations:
-    "nginx.ingress.kubernetes.io/rewrite-target": "/"
-    "cert-manager.io/cluster-issuer": "letsencrypt-prod"
-  tls:
-    - hosts:
-        - "example.com"
-      secretName: "example-com-tls"
-  rules:
-    - host: "example.com"
-      paths:
-        - path: /
-          pathType: Prefix
-          service:
-            name: my-app-service
-            port: 80
-    - host: "another.com"
-      paths:
-        - path: /api
-          pathType: Prefix
-          service:
-            name: another-service
-            port: 8080
+  nameOverride: ""         # Optional: Can be set by the user to override the app name
+  fullnameOverride: ""     # Optional: Can be set by the user to override the full name of the app
+  labels: {}               # Empty by default, to be filled by the user with additional labels
 
 deployment:
-  enabled: true  # Toggle for deployment
-  replicas: 3
-  annotations:
-    "deployment.kubernetes.io/revision": "1"
-  containers:
-    - name: my-app-container
-      image: my-app:1.0.0
-      imagePullPolicy: IfNotPresent
-      ports:
-        - containerPort: 80
-      env:
-        - name: ENV_VAR
-          value: "production"
-      resources:
-        limits:
-          cpu: "500m"
-          memory: "128Mi"
-        requests:
-          cpu: "200m"
-          memory: "64Mi"
-      volumeMounts:
-        - name: config-volume
-          mountPath: /etc/config
-          subPath: config.yaml
-  volumes:
-    - name: config-volume
-      configMap:
-        name: my-app-config
-        items:
-          - key: config.yaml
-            path: config.yaml
+  enabled: true            # User can toggle deployment on/off
+  containers: []           # To be specified by the user: list of containers with image and config
+
+service:
+  enabled: false            # User can toggle service creation on/off
+  type: ClusterIP          # Default service type; users can override this
+  ports: []                # To be defined by the user, e.g. [{name: http, port: 80, targetPort: 8080}]
+
+ingress:
+  enabled: false           # Default to false, users can enable ingress and define their settings
 
 hpa:
-  enabled: true
-  minReplicas: 2
-  maxReplicas: 10
-  targetCPUUtilizationPercentage: 80
-  targetMemoryUtilizationPercentage: 70
-  annotations:
-    "autoscaling.kubernetes.io/metrics": "cpu"
-  customMetrics: 
-    - type: Resource
-      resource:
-        name: custom_metric_name
-      targetType: AverageValue
-      averageValue: "100Mi"
-      
-      
-pv:
-  enabled: true
-  name: my-pv
-  labels:
-    app.kubernetes.io/name: my-app
-    app.kubernetes.io/part-of: my-project
-  annotations:
-    environment: production
-  capacity: 20Gi
-  accessModes:
-    - ReadWriteOnce
-    - ReadOnlyMany
-  storageClass: standard
-  reclaimPolicy: Retain
-  volumeMode: Filesystem
-
-  # You can configure either a hostPath or an NFS volume
-  hostPath:
-    path: /mnt/data
-    hostPathType: DirectoryOrCreate
-
-  # Uncomment for NFS
-  # nfs:
-  #   path: /nfs/data
-  #   server: 192.168.1.100
-  #   readOnly: false
+  enabled: false           # Horizontal Pod Autoscaler disabled by default
+  minReplicas: 1           # Minimum number of replicas for autoscaling (default 1)
+  maxReplicas: 2           # Maximum number of replicas for autoscaling (default 5)
 
 pvc:
-  enabled: true
-  name: my-pvc
-  labels:
-    app.kubernetes.io/name: my-app
-    app.kubernetes.io/part-of: my-project
-  annotations:
-    environment: production
-  accessModes:
-    - ReadWriteOnce
-  storage: 20Gi
-  storageClass: standard
-  volumeMode: Filesystem
-  selector:
-    matchLabels:
-      app.kubernetes.io/name: my-pv
+  enabled: false           # PVC disabled by default; users need to specify PVC details if required
+
+pv:
+  enabled: false           # PV disabled by default; users need to define PV details if required
