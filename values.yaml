@@ -1,0 +1,20 @@
+app:
+  name: my-app
+
+service:
+  enabled: true
+  type: ClusterIP # Can be ClusterIP or NodePort
+  annotations: 
+    "prometheus.io/scrape": "true"
+    "prometheus.io/port": "8080"
+  externalTrafficPolicy: Cluster # Only used if type is NodePort
+  ports:
+    - name: http
+      protocol: TCP
+      port: 80
+      targetPort: 8080
+    - name: https
+      protocol: TCP
+      port: 443
+      targetPort: 8443
+      nodePort: 30001 # Only used if type is NodePort
