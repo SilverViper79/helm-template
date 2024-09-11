@@ -98,3 +98,48 @@ hpa:
         name: custom_metric_name
       targetType: AverageValue
       averageValue: "100Mi"
+      
+      
+pv:
+  enabled: true
+  name: my-pv
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/part-of: my-project
+  annotations:
+    environment: production
+  capacity: 20Gi
+  accessModes:
+    - ReadWriteOnce
+    - ReadOnlyMany
+  storageClass: standard
+  reclaimPolicy: Retain
+  volumeMode: Filesystem
+
+  # You can configure either a hostPath or an NFS volume
+  hostPath:
+    path: /mnt/data
+    hostPathType: DirectoryOrCreate
+
+  # Uncomment for NFS
+  # nfs:
+  #   path: /nfs/data
+  #   server: 192.168.1.100
+  #   readOnly: false
+
+pvc:
+  enabled: true
+  name: my-pvc
+  labels:
+    app.kubernetes.io/name: my-app
+    app.kubernetes.io/part-of: my-project
+  annotations:
+    environment: production
+  accessModes:
+    - ReadWriteOnce
+  storage: 20Gi
+  storageClass: standard
+  volumeMode: Filesystem
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: my-pv
