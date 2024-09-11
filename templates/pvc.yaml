@@ -1,0 +1,37 @@
+{{- if .Values.pvc.enabled -}}
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: {{ .Values.pvc.name }}
+  labels:
+    {{- range $key, $value := .Values.pvc.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- if .Values.pvc.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.pvc.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  accessModes:
+    {{- range .Values.pvc.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  resources:
+    requests:
+      storage: {{ .Values.pvc.storage | default "10Gi" }}
+  {{- if .Values.pvc.storageClass }}
+  storageClassName: {{ .Values.pvc.storageClass }}
+  {{- end }}
+  {{- if .Values.pvc.volumeMode }}
+  volumeMode: {{ .Values.pvc.volumeMode | default "Filesystem" }}
+  {{- end }}
+  {{- if .Values.pvc.selector }}
+  selector:
+    matchLabels:
+      {{- range $key, $value := .Values.pvc.selector.matchLabels }}
+      {{ $key }}: {{ $value | quote }}
+      {{- end }}
+  {{- end }}
+{{- end }}
