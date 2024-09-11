@@ -50,3 +50,36 @@ ingress:
           service:
             name: another-service
             port: 8080
+
+deployment:
+  enabled: true  # Toggle for deployment
+  replicas: 3
+  annotations:
+    "deployment.kubernetes.io/revision": "1"
+  containers:
+    - name: my-app-container
+      image: my-app:1.0.0
+      imagePullPolicy: IfNotPresent
+      ports:
+        - containerPort: 80
+      env:
+        - name: ENV_VAR
+          value: "production"
+      resources:
+        limits:
+          cpu: "500m"
+          memory: "128Mi"
+        requests:
+          cpu: "200m"
+          memory: "64Mi"
+      volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+          subPath: config.yaml
+  volumes:
+    - name: config-volume
+      configMap:
+        name: my-app-config
+        items:
+          - key: config.yaml
+            path: config.yaml
