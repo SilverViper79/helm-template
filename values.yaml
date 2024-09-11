@@ -83,3 +83,18 @@ deployment:
         items:
           - key: config.yaml
             path: config.yaml
+
+hpa:
+  enabled: true
+  minReplicas: 2
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 80
+  targetMemoryUtilizationPercentage: 70
+  annotations:
+    "autoscaling.kubernetes.io/metrics": "cpu"
+  customMetrics: 
+    - type: Resource
+      resource:
+        name: custom_metric_name
+      targetType: AverageValue
+      averageValue: "100Mi"
