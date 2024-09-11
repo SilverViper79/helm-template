@@ -1,0 +1,41 @@
+{{- if .Values.pv.enabled -}}
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: {{ .Values.pv.name }}
+  labels:
+    {{- range $key, $value := .Values.pv.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- if .Values.pv.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.pv.annotations }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- end }}
+spec:
+  capacity:
+    storage: {{ .Values.pv.capacity | default "10Gi" }}
+  accessModes:
+    {{- range .Values.pv.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- if .Values.pv.storageClass }}
+  storageClassName: {{ .Values.pv.storageClass }}
+  {{- end }}
+  persistentVolumeReclaimPolicy: {{ .Values.pv.reclaimPolicy | default "Retain" }}
+  volumeMode: {{ .Values.pv.volumeMode | default "Filesystem" }}
+  {{- if .Values.pv.hostPath }}
+  hostPath:
+    path: {{ .Values.pv.hostPath }}
+    type: {{ .Values.pv.hostPathType | default "DirectoryOrCreate" }}
+  {{- end }}
+  {{- if .Values.pv.nfs }}
+  nfs:
+    path: {{ .Values.pv.nfs.path }}
+    server: {{ .Values.pv.nfs.server }}
+    {{- if .Values.pv.nfs.readOnly }}
+    readOnly: {{ .Values.pv.nfs.readOnly | quote }}
+    {{- end }}
+  {{- end }}
+{{- end }}
