@@ -24,3 +24,29 @@ service:
       port: 443
       targetPort: 8443
       nodePort: 30001 # Only used if type is NodePort
+
+ingress:
+  enabled: true
+  ingressClassName: "nginx" # Optional ingress class
+  annotations:
+    "nginx.ingress.kubernetes.io/rewrite-target": "/"
+    "cert-manager.io/cluster-issuer": "letsencrypt-prod"
+  tls:
+    - hosts:
+        - "example.com"
+      secretName: "example-com-tls"
+  rules:
+    - host: "example.com"
+      paths:
+        - path: /
+          pathType: Prefix
+          service:
+            name: my-app-service
+            port: 80
+    - host: "another.com"
+      paths:
+        - path: /api
+          pathType: Prefix
+          service:
+            name: another-service
+            port: 8080
