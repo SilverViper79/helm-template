@@ -1,107 +1,66 @@
-{{- if .Values.deployment.enabled -}}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: {{ .Values.app.name }}-deployment
+  name: {{ .Release.Name }}-deployment
   labels:
-    {{- range $key, $value := .Values.app.labels }}
+    app: {{ .Release.Name }}
+    {{- range $key, $value := .Values.deployment.labels }}
     {{ $key }}: {{ $value | quote }}
     {{- end }}
-    app.kubernetes.io/instance: {{ .Release.Name }}
-    app.kubernetes.io/version: {{ .Chart.AppVersion }}
-    app.kubernetes.io/managed-by: {{ .Release.Service }}
-    app.kubernetes.io/component: deployment
-  {{- if .Values.deployment.annotations }}
-  annotations:
-    {{- range $key, $value := .Values.deployment.annotations }}
-    {{ $key }}: {{ $value | quote }}
-    {{- end }}
-  {{- end }}
 spec:
   replicas: {{ .Values.deployment.replicas | default 1 }}
   selector:
     matchLabels:
-      app.kubernetes.io/name: {{ .Values.app.name }}
-      app.kubernetes.io/instance: {{ .Release.Name }}
+      app: {{ .Release.Name }}
   template:
     metadata:
       labels:
-        {{- range $key, $value := .Values.app.labels }}
+        app: {{ .Release.Name }}
+        {{- range $key, $value := .Values.deployment.labels }}
         {{ $key }}: {{ $value | quote }}
         {{- end }}
-        app.kubernetes.io/instance: {{ .Release.Name }}
-        app.kubernetes.io/version: {{ .Chart.AppVersion }}
-        app.kubernetes.io/managed-by: {{ .Release.Service }}
-        app.kubernetes.io/component: pod
-      {{- if .Values.pod.annotations }}
-      annotations:
-        {{- range $key, $value := .Values.pod.annotations }}
-        {{ $key }}: {{ $value | quote }}
-        {{- end }}
-      {{- end }}
     spec:
-      {{- if .Values.deployment.imagePullSecrets }}
-      imagePullSecrets:
-        {{- range .Values.deployment.imagePullSecrets }}
-        - name: {{ . | quote }}
-        {{- end }}
-      {{- end }}
       containers:
-        {{- range .Values.deployment.containers }}
-        - name: {{ .name }}
-          image: {{ .image }}
-          imagePullPolicy: {{ .imagePullPolicy | default "IfNotPresent" }}
+        - name: {{ .Release.Name }}-container
+          image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default "latest" }}
+          imagePullPolicy: {{ .Values.deployment.image.pullPolicy | default "IfNotPresent" }}
           ports:
-            {{- range .ports }}
-            - containerPort: {{ .containerPort }}
-              protocol: {{ .protocol | default "TCP" }}
-            {{- end }}
+            - containerPort: {{ .Values.deployment.containerPort | default 80 }}
+          {{- if .Values.deployment.env }}
           env:
-            {{- range .env }}
+            {{- range .Values.deployment.env }}
             - name: {{ .name }}
               value: {{ .value | quote }}
             {{- end }}
-          {{- if .resources }}
+          {{- end }}
+
+          {{- if .Values.deployment.resources }}
           resources:
-            limits:
-              {{- range $key, $value := .resources.limits }}
-              {{ $key }}: {{ $value }}
-              {{- end }}
-            requests:
-              {{- range $key, $value := .resources.requests }}
-              {{ $key }}: {{ $value }}
-              {{- end }}
+            {{- toYaml .Values.deployment.resources | nindent 12 }}
           {{- end }}
-          {{- if .volumeMounts }}
-          volumeMounts:
-            {{- range .volumeMounts }}
-            - name: {{ .name }}
-              mountPath: {{ .mountPath }}
-              {{- if .subPath }}
-              subPath: {{ .subPath }}
-              {{- end }}
-            {{- end }}
+
+          {{- if .Values.deployment.livenessProbe.enabled }}
+          livenessProbe:
+            httpGet:
+              path: {{ .Values.deployment.livenessProbe.path | default "/" }}
+              port: {{ .Values.deployment.livenessProbe.port | default 80 }}
+              scheme: {{ .Values.deployment.livenessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.deployment.livenessProbe.initialDelaySeconds | default 10 }}
+            periodSeconds: {{ .Values.deployment.livenessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.deployment.livenessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.deployment.livenessProbe.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.deployment.livenessProbe.successThreshold | default 1 }}
           {{- end }}
-        {{- end }}
-      {{- if .Values.deployment.volumes }}
-      volumes:
-        {{- range .Values.deployment.volumes }}
-        - name: {{ .name }}
-          {{- if .configMap }}
-          configMap:
-            name: {{ .configMap.name }}
-            {{- if .configMap.items }}
-            items:
-              {{- range .configMap.items }}
-              - key: {{ .key }}
-                path: {{ .path }}
-              {{- end }}
-            {{- end }}
+
+          {{- if .Values.deployment.readinessProbe.enabled }}
+          readinessProbe:
+            httpGet:
+              path: {{ .Values.deployment.readinessProbe.path | default "/" }}
+              port: {{ .Values.deployment.readinessProbe.port | default 80 }}
+              scheme: {{ .Values.deployment.readinessProbe.scheme | default "HTTP" }}
+            initialDelaySeconds: {{ .Values.deployment.readinessProbe.initialDelaySeconds | default 5 }}
+            periodSeconds: {{ .Values.deployment.readinessProbe.periodSeconds | default 10 }}
+            timeoutSeconds: {{ .Values.deployment.readinessProbe.timeoutSeconds | default 5 }}
+            failureThreshold: {{ .Values.deployment.readinessProbe.failureThreshold | default 3 }}
+            successThreshold: {{ .Values.deployment.readinessProbe.successThreshold | default 1 }}
           {{- end }}
-          {{- if .secret }}
-          secret:
-            secretName: {{ .secret.secretName }}
-          {{- end }}
-        {{- end }}
-      {{- end }}
-{{- end }}
