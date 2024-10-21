@@ -1,33 +1,53 @@
-{{- if .Values.persistentVolume.enabled -}}
+{{- if .Values.pv.enabled -}}
 apiVersion: v1
 kind: PersistentVolume
 metadata:
-  name: {{ .Values.persistentVolume.name }}
+  name: {{ .Values.pv.name }}
   labels:
-    app: {{ .Release.Name }}
-spec:
-  capacity:
-    storage: {{ .Values.persistentVolume.size }}
-  accessModes:
-  - {{ .Values.persistentVolume.accessMode }}
-  persistentVolumeReclaimPolicy: {{ .Values.persistentVolume.reclaimPolicy }}
-  storageClassName: {{ .Values.persistentVolume.storageClassName }}
-  {{- if eq .Values.persistentVolume.type "nfs" }}
-  nfs:
-    server: {{ .Values.persistentVolume.nfs.server }}
-    path: {{ .Values.persistentVolume.nfs.path }}
-  {{- else if eq .Values.persistentVolume.type "hostPath" }}
-  hostPath:
-    path: {{ .Values.persistentVolume.hostPath.path }}
-    type: {{ .Values.persistentVolume.hostPath.type | default "DirectoryOrCreate" }}
-  {{- else if eq .Values.persistentVolume.type "efs" }}
-  csi:
-    driver: efs.csi.aws.com
-    volumeHandle: {{ .Values.persistentVolume.efs.fileSystemId }}
-    {{- if .Values.persistentVolume.efs.accessPointId }}
-    volumeAttributes:
-      accessPointId: {{ .Values.persistentVolume.efs.accessPointId }}
+    {{- range $key, $value := .Values.pv.labels }}
+    {{ $key }}: {{ $value | quote }}
+    {{- end }}
+  {{- if .Values.pv.annotations }}
+  annotations:
+    {{- range $key, $value := .Values.pv.annotations }}
+    {{ $key }}: {{ $value | quote }}
     {{- end }}
   {{- end }}
----
-{{- end -}}
+spec:
+  capacity:
+    storage: {{ .Values.pv.capacity | default "10Gi" }}
+  accessModes:
+    {{- range .Values.pv.accessModes }}
+    - {{ . | quote }}
+    {{- end }}
+  {{- if .Values.pv.storageClass }}
+  storageClassName: {{ .Values.pv.storageClass }}
+  {{- end }}
+  persistentVolumeReclaimPolicy: {{ .Values.pv.reclaimPolicy | default "Retain" }}
+  volumeMode: {{ .Values.pv.volumeMode | default "Filesystem" }}
+  
+  {{- if .Values.pv.hostPath }}
+  hostPath:
+    path: {{ .Values.pv.hostPath }}
+    type: {{ .Values.pv.hostPathType | default "DirectoryOrCreate" }}
+  {{- end }}
+
+  {{- if .Values.pv.nfs }}
+  nfs:
+    path: {{ .Values.pv.nfs.path }}
+    server: {{ .Values.pv.nfs.server }}
+    {{- if .Values.pv.nfs.readOnly }}
+    readOnly: {{ .Values.pv.nfs.readOnly | quote }}
+    {{- end }}
+  {{- end }}
+  
+  {{- if .Values.pv.csi }}
+  csi:
+    driver: {{ .Values.pv.csi.driver | default "efs.csi.aws.com" }}
+    volumeHandle: {{ .Values.pv.csi.volumeHandle | default .Values.pv.csi.fileSystemId }}
+    {{- if .Values.pv.csi.accessPointId }}
+    volumeAttributes:
+      accessPointId: {{ .Values.pv.csi.accessPointId }}
+    {{- end }}
+  {{- end }}
+{{- end }}
