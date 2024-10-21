@@ -6,7 +6,52 @@ app:
 deployment:
   enabled: true            # User can toggle deployment on/off
   containers: []           # To be specified by the user: list of containers with image and config
+  deployment:
+  replicas: 2
+  containerPort: 80
+  labels:
+    environment: "production"
+  image:
+    repository: "nginx"
+    tag: "1.21.0"
+    pullPolicy: "IfNotPresent"
+  env: # Environment variables for the container
+    - name: "ENV"
+      value: "production"
 
+  # Optional resource limits and requests
+  resources:
+    limits:
+      cpu: "500m"
+      memory: "512Mi"
+    requests:
+      cpu: "250m"
+      memory: "256Mi"
+
+  # Liveness probe configuration
+  livenessProbe:
+    enabled: true
+    path: "/healthz"
+    port: 80
+    scheme: "HTTP"  # Can be set to "HTTP" or "HTTPS"
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+
+  # Readiness probe configuration
+  readinessProbe:
+    enabled: true
+    path: "/ready"
+    port: 80
+    scheme: "HTTP"  # Can be set to "HTTP" or "HTTPS"
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+    successThreshold: 1
+    
 service:
   enabled: false            # User can toggle service creation on/off
   type: ClusterIP          # Default service type; users can override this
