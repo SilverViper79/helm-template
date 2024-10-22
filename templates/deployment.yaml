@@ -20,6 +20,37 @@ spec:
         {{ $key }}: {{ $value | quote }}
         {{- end }}
     spec:
+
+      {{- if .Values.deployment.initContainer.enabled }}
+      initContainers:
+        - name: {{ .Release.Name }}-init
+          image: {{ .Values.deployment.initContainer.image.repository }}:{{ .Values.deployment.initContainer.image.tag | default "latest" }}
+          imagePullPolicy: {{ .Values.deployment.initContainer.image.pullPolicy | default "IfNotPresent" }}
+          {{- if .Values.deployment.initContainer.command }}
+          command:
+            {{- range .Values.deployment.initContainer.command }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.initContainer.args }}
+          args:
+            {{- range .Values.deployment.initContainer.args }}
+            - {{ . | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.initContainer.env }}
+          env:
+            {{- range .Values.deployment.initContainer.env }}
+            - name: {{ .name }}
+              value: {{ .value | quote }}
+            {{- end }}
+          {{- end }}
+          {{- if .Values.deployment.initContainer.resources }}
+          resources:
+            {{- toYaml .Values.deployment.initContainer.resources | nindent 12 }}
+          {{- end }}
+      {{- end }}
+
       containers:
         - name: {{ .Release.Name }}-container
           image: {{ .Values.deployment.image.repository }}:{{ .Values.deployment.image.tag | default "latest" }}
