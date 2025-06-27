@@ -70,3 +70,22 @@ pvc:
 
 pv:
   enabled: false           # PV disabled by default; users need to define PV details if required
+
+
+pdb:
+  enabled: true
+  name: ""         # Optional — defaults to <release-name>-pdb
+  namespace: ""    # Optional — defaults to .Release.Namespace
+
+  labels:
+    app: my-app
+
+  annotations:
+    owner: team-a
+
+  selector:
+    matchLabels:
+      app: my-app
+
+  minAvailable: 2
+
