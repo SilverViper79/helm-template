@@ -1,0 +1,24 @@
+serviceAccount:
+  enabled: true
+
+  labels:
+    global-label: true
+
+  annotations:
+    managed-by: helm
+
+  list:
+    - name: ""  # Empty name, will fallback to <release-name>-sa-0
+      namespace: ""  # Empty namespace, will fallback to release namespace
+      labels:
+        app: api
+      annotations:
+        scope: internal
+      automountServiceAccountToken: true
+      imagePullSecrets:
+        - regcred
+
+    - name: "explicit-sa"
+      labels:
+        app: worker
+      automountServiceAccountToken: false
